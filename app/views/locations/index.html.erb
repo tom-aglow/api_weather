@@ -1,0 +1,74 @@
+<div id="locations">
+    <login v-if="token == null"></login>
+    <temperature v-else></temperature>
+</div>
+
+<script type="text/x-template" id="login-template">
+    <form>
+        <input type="text" placeholder="email" v-model="email">
+        <input type="password" placeholder="password" v-model="password">
+        <button @click="submit">Login</button>
+    </form>
+</script>
+
+<script type="text/x-template" id="temperature-template">
+    <div>
+        <h1>{{ temp }}F</h1>
+        <p>{{ location }}</p>
+    </div>
+</script>
+
+<script type="text/javascript" charset="utf-8">
+  const state = {
+    token: localStorage.getItem('token')
+  };
+
+  Vue.component('temperature', {
+    template: '#temperature-template',
+    data() {
+      return {
+        temp: null,
+        location: null
+      }
+    },
+    created() {
+      this.fetch();
+    },
+    methods: {
+      fetch() {
+        axios.get('/api/v1/locations/1')
+            .then(res => {
+              console.log(res);
+              this.temp = res.data.data.attributes.current.temp;
+              this.location = res.data.data.attributes.name;
+            })
+      }
+    }
+  });
+
+  Vue.component('login', {
+    template: '#login-template',
+    data() {
+      return {
+        email: 'tom@ohhhh.me',
+        password: 'password'
+      }
+    },
+
+    methods: {
+      submit(event) {
+        event.preventDefault();
+        axios.post('/api/v1/user_token', {auth: {email: this.email, password: this.password}})
+            .then(res => {
+              localStorage.setItem('token', res.data.jwt);
+              state.token = res.data.jwt;
+            });
+      }
+    }
+  });
+
+  new Vue({
+    el: '#locations',
+    data: state
+  })
+</script>
